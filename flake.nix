@@ -19,10 +19,31 @@
   }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
+      pname = "minusone";
+
     in {
-      packages = {
-        default = self.packages.${system}.myapp;
-      };
+      packages = 
+        let
+          minusone-pkg = pkgs.rustPlatform.buildRustPackage {
+            inherit pname;
+
+            version = "0.1.0";
+            src = self;
+            cargoLock.lockFile = ./Cargo.lock;
+
+            # If your package needs system libraries, add them here.
+            # For example:
+            # buildInputs = [ pkgs.openssl ];
+          };
+        in
+        {
+          # Expose the package under its own name
+          "${pname}" = minusone-pkg;
+
+          # Set the default package to our new package.
+          # This allows `nix run .` to work without specifying the name.
+          default = minusone-pkg;
+        };
 
       # Shell for app dependencies.
       #
